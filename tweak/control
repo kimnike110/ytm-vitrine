@@ -1,0 +1,9 @@
+Package: pw.chroma.ytmvitrine
+Name: YTMVitrine
+Depends: mobilesubstrate
+Version: 1.0.0
+Architecture: iphoneos-arm64
+Description: Liquid Glass UI redesign for YouTube Music iOS (1:1 chroma.pw / vitrine style)
+Maintainer: Chroma Developer
+Author: Chroma Developer
+Section: Tweaks
