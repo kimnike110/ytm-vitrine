@@ -1,23 +1,6 @@
 #import "YTGlass.h"
 #import <objc/runtime.h>
-
-@interface UIGlassEffect : UIVisualEffect
-+ (instancetype)effectWithStyle:(NSInteger)style;
-@end
-
-@interface UICornerRadius : NSObject
-+ (instancetype)fixedRadius:(CGFloat)radius;
-+ (instancetype)containerConcentricRadius;
-@end
-
-@interface UICornerConfiguration : NSObject
-+ (instancetype)capsuleConfiguration;
-+ (instancetype)configurationWithUniformRadius:(id)radius;
-@end
-
-@interface UIView (UICornerConfig)
-- (void)setCornerConfiguration:(id)config;
-@end
+#import <objc/message.h>
 
 BOOL YTHasNativeGlass(void) {
     Class glassClass = NSClassFromString(@"UIGlassEffect");
@@ -27,7 +10,7 @@ BOOL YTHasNativeGlass(void) {
 UIVisualEffect *YTGlassEffect(void) {
     Class glass = NSClassFromString(@"UIGlassEffect");
     if ([glass respondsToSelector:@selector(effectWithStyle:)]) {
-        return [glass effectWithStyle:0];
+        return ((id (*)(id, SEL, NSInteger))objc_msgSend)(glass, @selector(effectWithStyle:), 0);
     }
     if (@available(iOS 13.0, *)) {
         return [UIBlurEffect effectWithStyle:UIBlurEffectStyleSystemChromeMaterialDark];
@@ -65,14 +48,15 @@ void YTShapeGlassView(UIView *view, CGFloat cornerRadius, BOOL isCapsule) {
     id shape = nil;
     if (config && [view respondsToSelector:@selector(setCornerConfiguration:)]) {
         if (isCapsule && [config respondsToSelector:@selector(capsuleConfiguration)]) {
-            shape = [config capsuleConfiguration];
+            shape = ((id (*)(id, SEL))objc_msgSend)(config, @selector(capsuleConfiguration));
         } else if ([config respondsToSelector:@selector(configurationWithUniformRadius:)] &&
                    [cornerRadiusCls respondsToSelector:@selector(fixedRadius:)]) {
-            shape = [config configurationWithUniformRadius:[cornerRadiusCls fixedRadius:cornerRadius]];
+            id rObj = ((id (*)(id, SEL, CGFloat))objc_msgSend)(cornerRadiusCls, @selector(fixedRadius:), cornerRadius);
+            shape = ((id (*)(id, SEL, id))objc_msgSend)(config, @selector(configurationWithUniformRadius:), rObj);
         }
     }
     if (shape) {
-        [view setCornerConfiguration:shape];
+        ((void (*)(id, SEL, id))objc_msgSend)(view, @selector(setCornerConfiguration:), shape);
         view.clipsToBounds = NO;
     } else {
         CGFloat radius = isCapsule ? (view.bounds.size.height / 2.0) : cornerRadius;
